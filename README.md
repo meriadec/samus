@@ -18,3 +18,22 @@ npm i -g samus
 ```bash
 samus <url>
 ```
+
+## Configuration
+
+#### the `.samusrc` file
+
+You can create a `.samusrc` file in your `$HOME` directory, to specify default
+server / default credentials. Here is an example `.samusrc`:
+
+```json
+{
+  "defaultServer": {
+    "url": "example.com",
+    "credentials": {
+      "username": "bob",
+      "password": "sup3r-s3cr3t"
+    }
+  }
+}
+```

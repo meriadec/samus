@@ -14,23 +14,26 @@ const isBasicAuthErr = err => (
 
 class Samus {
 
-  constructor (url) {
+  constructor (url, config) {
 
-    this.url = url
+    this.config = config
+    this.url = url || this.config && this.config.defaultServer && this.config.defaultServer.url
 
-    if (this.url[this.url.length - 1] === '/') {
+    if (this.url && this.url[this.url.length - 1] === '/') {
       this.url = this.url.substr(0, this.url.length - 1)
     }
 
     this.list = null
     this.authForm = null
-    this.credentials = null
+    this.credentials = this.config && this.config.defaultServer && this.config.defaultServer.credentials || null
 
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
 
     this.loader = blessed.loading()
     this.screen.append(this.loader)
+
+    this.load()
 
   }
 
@@ -171,7 +174,4 @@ class Samus {
 
 }
 
-export default url => {
-  const s = new Samus(url)
-  s.load()
-}
+export default Samus
