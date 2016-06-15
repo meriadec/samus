@@ -1,6 +1,6 @@
 {
   "name": "samus",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "mpv remote selector",
   "bin": {
     "samus": "./lib/index.js"
