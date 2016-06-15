@@ -6,7 +6,7 @@
     "samus": "./lib/index.js"
   },
   "scripts": {
-    "dev": "babel-node src/dev",
+    "start": "babel-node src",
     "build": "babel src --out-dir lib",
     "lint": "eslint src"
   },
