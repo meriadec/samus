@@ -1,0 +1,58 @@
+{
+  "name": "samus",
+  "version": "0.1.0",
+  "description": "mpv remote selector",
+  "bin": {
+    "samus": "./lib/index.js"
+  },
+  "scripts": {
+    "dev": "babel-node src/dev",
+    "build": "babel src --out-dir lib",
+    "lint": "eslint src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meriadec/samus.git"
+  },
+  "keywords": [
+    "select",
+    "remote"
+  ],
+  "author": "meriadec <meriadec.pillet@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/meriadec/samus/issues"
+  },
+  "homepage": "https://github.com/meriadec/samus#readme",
+  "babel": {
+    "presets": [
+      "es2015",
+      "stage-0"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "zavatta"
+    ],
+    "rules": {
+      "no-console": 0,
+      "comma-dangle": 0
+    },
+    "globals": {
+      "Promise": false
+    }
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "cheerio": "^0.20.0",
+    "superagent": "^2.0.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.10.1",
+    "babel-eslint": "^6.0.4",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "eslint": "2.12.0",
+    "eslint-config-zavatta": "^3.0.2"
+  }
+}
