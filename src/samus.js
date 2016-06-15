@@ -46,7 +46,7 @@ class Samus {
   }
 
   output (text) {
-    let name = `${this.url}/${encodeURIComponent(text)}`
+    let name = `${this.url}/${text}`
     if (!name.startsWith('http')) {
       name = `http://${name}`
     }
