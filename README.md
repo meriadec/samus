@@ -37,3 +37,9 @@ server / default credentials. Here is an example `.samusrc`:
   }
 }
 ```
+
+Now, you don't have to specify it anymore, just type:
+
+```bash
+samus
+```
