@@ -1,14 +1,14 @@
-import cheerio from 'cheerio'
+const linkRegex = new RegExp('<a href="([^"]*)"', 'g')
 
 export default text => {
 
-  const $ = cheerio.load(text)
-  const links = $('a')
+  const links = []
 
-  const items = []
+  let link
+  while (link = linkRegex.exec(text)) {
+    links.push(link[1])
+  }
 
-  links.each((i, el) => items.push($(el).attr('href')))
-
-  return items
+  return links
 
 }
