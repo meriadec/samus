@@ -55,6 +55,13 @@ class Samus {
     console.log('\n>>>>>>>> Launching mpv...\n')
 
     const child = spawn('mpv', ['--quiet', name])
+    child.on('error', err => {
+      if (err.code === 'ENOENT') {
+        console.log('\nPlease install mpv to use samus (https://mpv.io/).\n')
+        process.exit()
+      }
+    });
+
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
 
