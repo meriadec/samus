@@ -16,7 +16,13 @@ npm i -g samus
 ## Usage
 
 ```bash
-samus <url>
+  Usage: samus [options] <url>
+
+  Options:
+
+    -h, --help        output usage information
+    -V, --version     output the version number
+    -f, --fullscreen  launch mpv in fullscreen
 ```
 
 ## Configuration

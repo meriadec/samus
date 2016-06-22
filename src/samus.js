@@ -1,184 +1,51 @@
-import blessed from 'blessed'
-import { spawn } from 'child_process'
+#!/usr/bin/env node
 
-import fetch from './fetch'
+import program from 'commander'
 
-const isBasicAuthErr = err => (
-  err.status
-  && err.status === 401
-  && err.response
-  && err.response.headers
-  && err.response.headers['www-authenticate']
-  && err.response.headers['www-authenticate'].indexOf('Basic') > -1
-)
+import Samus from './core'
+import loadConfig from './load-config'
 
-class Samus {
+program
+  .version('1.2.0')
+  .usage('[options] <url>')
+  .option('-f, --fullscreen', 'launch mpv in fullscreen')
+  .parse(process.argv)
 
-  constructor (url, config) {
+loadConfig()
+  .then(config => {
 
-    this.config = config
-    this.url = url || this.config && this.config.defaultServer && this.config.defaultServer.url
+    const url = program.args[0]
 
-    if (this.url && this.url[this.url.length - 1] === '/') {
-      this.url = this.url.substr(0, this.url.length - 1)
+    if (!url && (!config || !config.defaultServer || !config.defaultServer.url)) {
+      console.log('No url given.')
+      console.log('try `samus -h` to see usage')
+      process.exit(0)
     }
 
-    this.list = null
-    this.authForm = null
-    this.credentials = this.config && this.config.defaultServer && this.config.defaultServer.credentials || null
+    new Samus(url, config, program)
 
-    this.screen = blessed.screen({ smartCSR: true })
-    this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
+  })
+/*
+const url = process.argv[2] || ''
 
-    this.loader = blessed.loading()
-    this.screen.append(this.loader)
-
-    this.load()
-
-  }
-
-  destroy (msg) {
-    this.screen.destroy()
-    if (msg) {
-      console.log(msg)
-    }
-    process.exit()
-  }
-
-  output (text) {
-    let name = `${this.url}/${text}`
-    if (!name.startsWith('http')) {
-      name = `http://${name}`
-    }
-    this.screen.destroy()
-
-    console.log('\n>>>>>>>> Launching mpv...\n')
-
-    const child = spawn('mpv', ['--quiet', name])
-    child.on('error', err => {
-      if (err.code === 'ENOENT') {
-        console.log('\nPlease install mpv to use samus (https://mpv.io/).\n')
-        process.exit()
-      }
-    });
-
-    child.stdout.pipe(process.stdout)
-    child.stderr.pipe(process.stderr)
-
-  }
-
-  navigate (suburl) {
-    this.url = `${this.url}/${suburl}`
-    this.load()
-  }
-
-  auth () {
-    this.authForm = blessed.form({
-      label: 'Authentication required',
-      parent: this.screen,
-      border: 'line',
-      height: 11,
-      width: 50,
-      keys: true,
-    })
-    const inputUsername = blessed.textbox({
-      inputOnFocus: true,
-      parent: this.authForm,
-      name: 'username',
-      top: 3,
-      left: 5,
-      right: 5,
-      height: 1,
-      style: {
-        bg: 'black',
-        focus: {
-          bg: 'blue',
-          fg: 'black',
-        },
-        hover: {
-          bg: 'blue'
-        }
-      },
-    })
-    inputUsername.on('submit', () => this.authForm.submit())
-    const inputPassword = blessed.textbox({
-      inputOnFocus: true,
-      parent: this.authForm,
-      censor: true,
-      name: 'password',
-      top: 5,
-      left: 5,
-      right: 5,
-      height: 1,
-      style: {
-        bg: 'black',
-        focus: {
-          bg: 'blue',
-          fg: 'black',
-        },
-        hover: {
-          bg: 'blue'
-        }
-      },
-    })
-    inputPassword.on('submit', () => this.authForm.submit())
-    inputUsername.focus()
-    this.authForm.on('submit', () => {
-      this.credentials = {
-        username: inputUsername.value,
-        password: inputPassword.value
-      }
-      this.screen.remove(this.authForm)
-      this.load()
-    })
-    this.screen.render()
-  }
-
-  load () {
-    if (this.list) { this.screen.remove(this.list) }
-    this.loader.load(`>>> Loading ${this.url}`)
-    fetch(this.url, this.credentials)
-      .then(items => {
-        this.list = blessed.list({
-          items,
-          parent: this.screen,
-          border: 'line',
-          label: ` ${this.url} `,
-          keys: true,
-          style: {
-            selected: {
-              bg: 'white',
-              fg: 'black'
-            }
-          },
-        })
-        this.list.on('select', (item) => {
-          const text = item.getText()
-          if (text === '../') {
-            const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
-            if (!isRoot) {
-              this.url = this.url.substring(0, this.url.lastIndexOf('/'))
-              this.load()
-            }
-          } else if (text[text.length - 1] === '/') {
-            this.navigate(text.substr(0, text.length - 1))
-          } else {
-            this.output(text)
-          }
-        })
-        this.list.focus()
-        this.screen.render()
-      })
-      .catch(err => {
-        if (isBasicAuthErr(err)) {
-          this.auth()
-        } else {
-          this.destroy(err)
-        }
-      })
-      .then(() => this.loader.stop())
-  }
-
+const configFileName = path.join(process.env.HOME, '.samusrc')
+const config = {
+  defaultServer: null
 }
 
-export default Samus
+fs.readFile(configFileName, { encoding: 'utf8' }, (err, l) => {
+  if (!err) {
+    try {
+      const loaded = JSON.parse(l)
+      Object.assign(config, loaded)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+  if (!url && (!config || !config.defaultServer || !config.defaultServer.url)) {
+    console.log('usage: samus <url>')
+    process.exit(0)
+  }
+  new Samus(url, config)
+})
+*/
