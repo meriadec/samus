@@ -155,9 +155,9 @@ class Samus {
         this.list.on('select', (item) => {
           const text = item.getText()
           if (text === '../') {
-            const lastSlashIndex = this.url.lastIndexOf('/')
-            if (lastSlashIndex > -1) {
-              this.url = this.url.substring(0, lastSlashIndex)
+            const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
+            if (!isRoot) {
+              this.url = this.url.substring(0, this.url.lastIndexOf('/'))
               this.load()
             }
           } else if (text[text.length - 1] === '/') {
