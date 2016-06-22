@@ -6,7 +6,7 @@ import Samus from './core'
 import loadConfig from './load-config'
 
 program
-  .version('1.2.0')
+  .version('1.3.0')
   .usage('[options] <url>')
   .option('-f, --fullscreen', 'launch mpv in fullscreen')
   .parse(process.argv)
