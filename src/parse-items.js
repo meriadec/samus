@@ -6,7 +6,7 @@ export default text => {
 
   let link
   while (link = linkRegex.exec(text)) {
-    links.push(link[1])
+    links.push(decodeURI(link[1]))
   }
 
   return links
