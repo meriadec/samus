@@ -4,6 +4,8 @@
 
 # samus
 
+[![samus](https://nodei.co/npm/samus.png)](https://www.npmjs.com/package/samus)
+
 Samus let you select a file from a basic HTTP website, then launch [mpv](https://mpv.io/) with it.
 It was build for personal purposes, but you're welcome!
 
