@@ -168,7 +168,7 @@ class Samus {
           },
         })
         this.list.on('select', (item) => {
-          const text = item.getText()
+          const text = encodeURI(item.getText())
           if (text === '../') {
             const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
             if (!isRoot) {
