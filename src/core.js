@@ -106,68 +106,6 @@ class Samus {
     this.load()
   }
 
-  auth () {
-    this.authForm = blessed.form({
-      label: 'Authentication required',
-      parent: this.screen,
-      border: 'line',
-      height: 11,
-      width: 50,
-      keys: true,
-    })
-    const inputUsername = blessed.textbox({
-      inputOnFocus: true,
-      parent: this.authForm,
-      name: 'username',
-      top: 3,
-      left: 5,
-      right: 5,
-      height: 1,
-      style: {
-        bg: 'black',
-        focus: {
-          bg: 'blue',
-          fg: 'black',
-        },
-        hover: {
-          bg: 'blue'
-        }
-      },
-    })
-    inputUsername.on('submit', () => this.authForm.submit())
-    const inputPassword = blessed.textbox({
-      inputOnFocus: true,
-      parent: this.authForm,
-      censor: true,
-      name: 'password',
-      top: 5,
-      left: 5,
-      right: 5,
-      height: 1,
-      style: {
-        bg: 'black',
-        focus: {
-          bg: 'blue',
-          fg: 'black',
-        },
-        hover: {
-          bg: 'blue'
-        }
-      },
-    })
-    inputPassword.on('submit', () => this.authForm.submit())
-    inputUsername.focus()
-    this.authForm.on('submit', () => {
-      this.credentials = {
-        username: inputUsername.value,
-        password: inputPassword.value
-      }
-      this.screen.remove(this.authForm)
-      this.load()
-    })
-    this.screen.render()
-  }
-
   load () {
     if (this.list) { this.screen.remove(this.list) }
     this.loader.load(`▶ Loading ${this.url}`)
@@ -205,7 +143,7 @@ class Samus {
       })
       .catch(err => {
         if (isBasicAuthErr(err)) {
-          this.auth()
+          this.destroy('This site is protected. You may need to add your credentials in your ~/.samusrc, check README')
         } else {
           this.destroy(err)
         }
