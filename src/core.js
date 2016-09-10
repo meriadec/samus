@@ -66,6 +66,7 @@ class Samus {
   output (text) {
     this.screen.destroy()
 
+    console.log(`\n>>> Selected ${decodeURI(text)}`)
     console.log('\n>>>>>>>> Launching mpv...\n')
     const mpvArgs = this.buildArgs(text)
 
