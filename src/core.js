@@ -2,6 +2,7 @@ import blessed from 'blessed'
 import { spawn } from 'child_process'
 
 import fetch from './fetch'
+import * as history from './history'
 
 const isBasicAuthErr = err => (
   err.status
@@ -18,7 +19,7 @@ class Samus {
 
     this.config = config
     this.args = args
-    this.url = url || this.config && this.config.defaultServer && this.config.defaultServer.url
+    this.url = url || (this.config && this.config.defaultServer && this.config.defaultServer.url)
 
     if (this.url && this.url[this.url.length - 1] === '/') {
       this.url = this.url.substr(0, this.url.length - 1)
@@ -26,7 +27,7 @@ class Samus {
 
     this.list = null
     this.authForm = null
-    this.credentials = this.config && this.config.defaultServer && this.config.defaultServer.credentials || null
+    this.credentials = (this.config && this.config.defaultServer && this.config.defaultServer.credentials) || null
 
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
@@ -46,14 +47,18 @@ class Samus {
     process.exit()
   }
 
-  buildArgs (text) {
-
-    const args = ['--quiet']
-
+  getFullUrl (text) {
     let name = `${this.url}/${text}`
     if (!name.startsWith('http')) {
       name = `http://${name}`
     }
+    return name
+  }
+
+  buildArgs (text) {
+
+    const args = ['--quiet']
+    const name = this.getFullUrl(text)
 
     if (this.args.fullscreen) {
       args.push('--fs')
@@ -63,23 +68,36 @@ class Samus {
     return args
   }
 
+  markRead (text) {
+    const full = this.getFullUrl(text)
+    return history.set(full)
+  }
+
+  checkmarkText (text) {
+    if (text === '../' || text[text.length - 1] === '/') { return text }
+    return `[${history.has(this.getFullUrl(encodeURI(text))) ? 'x' : ' '}] ${text}`
+  }
+
   output (text) {
     this.screen.destroy()
 
-    console.log(`\n>>> Selected ${decodeURI(text)}`)
-    console.log('\n>>>>>>>> Launching mpv...\n')
+    console.log(`\n▶ Selected [ ${decodeURI(text)} ]`)
+    console.log('▶ Launching mpv...\n')
+
     const mpvArgs = this.buildArgs(text)
 
-    const child = spawn('mpv', mpvArgs)
-    child.on('error', err => {
-      if (err.code === 'ENOENT') {
-        console.log('\nPlease install mpv to use samus (https://mpv.io/).\n')
-        process.exit()
-      }
-    })
-
-    child.stdout.pipe(process.stdout)
-    child.stderr.pipe(process.stderr)
+    this.markRead(text)
+      .then(() => {
+        const child = spawn('mpv', mpvArgs)
+        child.on('error', err => {
+          if (err.code === 'ENOENT') {
+            console.log('\nPlease install mpv to use samus (https://mpv.io/).\n')
+            process.exit()
+          }
+        })
+        child.stdout.pipe(process.stdout)
+        child.stderr.pipe(process.stderr)
+      })
 
   }
 
@@ -152,11 +170,11 @@ class Samus {
 
   load () {
     if (this.list) { this.screen.remove(this.list) }
-    this.loader.load(`>>> Loading ${this.url}`)
+    this.loader.load(`▶ Loading ${this.url}`)
     fetch(this.url, this.credentials)
       .then(items => {
         this.list = blessed.list({
-          items,
+          items: items.map(this.checkmarkText.bind(this)),
           parent: this.screen,
           border: 'line',
           label: ` ${this.url} `,
@@ -169,7 +187,7 @@ class Samus {
           },
         })
         this.list.on('select', (item) => {
-          const text = encodeURI(item.getText())
+          const text = item.getText()
           if (text === '../') {
             const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
             if (!isRoot) {
@@ -179,7 +197,7 @@ class Samus {
           } else if (text[text.length - 1] === '/') {
             this.navigate(text.substr(0, text.length - 1))
           } else {
-            this.output(text)
+            this.output(encodeURI(text.substr(4)))
           }
         })
         this.list.focus()

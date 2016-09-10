@@ -4,6 +4,7 @@ import program from 'commander'
 
 import Samus from './core'
 import loadConfig from './load-config'
+import { load as loadHistory } from './history'
 
 program
   .version('1.3.0')
@@ -11,7 +12,8 @@ program
   .option('-f, --fullscreen', 'launch mpv in fullscreen')
   .parse(process.argv)
 
-loadConfig()
+loadHistory()
+  .then(() => loadConfig())
   .then(config => {
 
     const url = program.args[0]
