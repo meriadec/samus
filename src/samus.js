@@ -12,8 +12,9 @@ program
   .option('-f, --fullscreen', 'launch mpv in fullscreen')
   .parse(process.argv)
 
-loadHistory()
-  .then(() => loadConfig())
+Promise.resolve()
+  .then(loadConfig)
+  .then(config => loadHistory(config).then(() => config))
   .then(config => {
 
     const url = program.args[0]

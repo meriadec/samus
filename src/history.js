@@ -1,9 +1,15 @@
+import r from 'superagent'
 import fs from 'fs'
 import path from 'path'
+import _ from 'lodash'
 
 const HISTORY_FILE_NAME = path.join(process.env.HOME, '.samus_history')
 
-const _history = {}
+// hard coded variable!! baaad!! (ps: I don't care, I'm the only user, lol)
+const SYNC_URL = 'http://samus-sync.sigsev.io'
+
+let _history = {}
+let _syncId = null
 
 function hash (str) {
   let hash = 0
@@ -16,22 +22,31 @@ function hash (str) {
     hash = ((hash << 5) - hash) + chr
     hash |= 0
   }
-  return -hash
+  return Math.abs(hash)
 }
 
-export function load () {
+export function load (config) {
   return new Promise((resolve, reject) => {
-    fs.readFile(HISTORY_FILE_NAME, { encoding: 'utf8' }, (err, content) => {
-      if (err) {
-        if (err.code !== 'ENOENT') {
-          return reject(err)
+    _syncId = _.get(config, 'defaultServer.sync', null)
+    if (_syncId) {
+      r.get(`${SYNC_URL}/history/${_syncId}`).end((err, res) => {
+        if (err) { return resolve() }
+        _history = res.body
+        resolve()
+      })
+    } else {
+      fs.readFile(HISTORY_FILE_NAME, { encoding: 'utf8' }, (err, content) => {
+        if (err) {
+          if (err.code !== 'ENOENT') {
+            return reject(err)
+          }
+          return resolve()
         }
-        return resolve()
-      }
-      const all = content.split('\n')
-      all.forEach(k => _history[k] = true)
-      resolve()
-    })
+        const all = content.split('\n')
+        all.forEach(k => _history[k] = true)
+        resolve()
+      })
+    }
   })
 }
 
@@ -41,7 +56,12 @@ export function has (key) {
 
 export function set (key) {
   return new Promise(resolve => {
-    _history[hash(key)] = true
-    fs.writeFile(HISTORY_FILE_NAME, Object.keys(_history).join('\n'), resolve)
+    const h = hash(key)
+    if (_syncId) {
+      r.post(`${SYNC_URL}/history/${_syncId}/${h}`).end(resolve)
+    } else {
+      _history[h] = true
+      fs.writeFile(HISTORY_FILE_NAME, Object.keys(_history).join('\n'), resolve)
+    }
   })
 }

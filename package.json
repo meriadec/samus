@@ -48,6 +48,7 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "commander": "^2.9.0",
+    "lodash": "^4.16.6",
     "superagent": "^2.3.0"
   },
   "devDependencies": {
