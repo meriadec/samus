@@ -14,13 +14,28 @@ const isBasicAuthErr = err => (
   && err.response.headers['www-authenticate'].indexOf('Basic') > -1
 )
 
+const defaultListOpts = {
+  border: 'line',
+  keys: true,
+  style: {
+    selected: {
+      bg: 'white',
+      fg: 'black'
+    }
+  },
+}
+
 class Samus {
 
   constructor (url, config, args) {
 
     this.config = config
     this.args = args
-    this.url = url || get(config, 'defaultServer.url')
+    this.url = url || get(config, 'servers[0].url')
+
+    if (config.servers.length > 1) {
+      this.shouldPickServer = true
+    }
 
     if (!this.url) {
       console.log('No url provided.')
@@ -28,13 +43,9 @@ class Samus {
       process.exit(0)
     }
 
-    if (this.url[this.url.length - 1] === '/') {
-      this.url = this.url.substr(0, this.url.length - 1)
-    }
-
     this.list = null
     this.authForm = null
-    this.credentials = get(config, 'defaultServer.credentials', null)
+    this.credentials = get(config, 'servers[0].credentials')
 
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
@@ -63,7 +74,6 @@ class Samus {
   }
 
   buildArgs (text) {
-
     const args = ['--quiet']
     const name = this.getFullUrl(text)
 
@@ -113,9 +123,34 @@ class Samus {
     this.load()
   }
 
+  pickServer () {
+
+    this.list = blessed.list({
+      items: this.config.servers.map(s => s.url),
+      parent: this.screen,
+      label: 'Pick your server',
+      ...defaultListOpts
+    })
+
+    this.list.on('select', (item, i) => {
+      this.url = get(this.config, `servers[${i}].url`)
+      this.credentials = get(this.config, `servers[${i}].credentials`)
+      this.shouldPickServer = false
+      this.load()
+    })
+
+    this.list.focus()
+    this.screen.render()
+
+  }
+
   load () {
+
     if (this.list) { this.screen.remove(this.list) }
+    if (this.shouldPickServer) { return this.pickServer() }
+
     this.loader.load(`▶ Loading ${this.url}`)
+
     fetch(this.url, this.credentials)
       .then(items => {
         this.list = blessed.list({
@@ -156,6 +191,7 @@ class Samus {
         }
       })
       .then(() => this.loader.stop())
+
   }
 
 }

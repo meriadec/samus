@@ -1,7 +1,6 @@
 import r from 'superagent'
 import fs from 'fs'
 import path from 'path'
-import _ from 'lodash'
 
 const HISTORY_FILE_NAME = path.join(process.env.HOME, '.samus_history')
 
@@ -27,7 +26,7 @@ function hash (str) {
 
 export function load (config) {
   return new Promise((resolve, reject) => {
-    _syncId = _.get(config, 'defaultServer.sync', null)
+    _syncId = config.sync
     if (_syncId) {
       r.get(`${SYNC_URL}/history/${_syncId}`).end((err, res) => {
         if (err) { return resolve() }

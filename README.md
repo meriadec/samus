@@ -31,18 +31,18 @@ npm i -g samus
 
 #### the `.samusrc` file
 
-You can create a `.samusrc` file in your `$HOME` directory, to specify default
-server / default credentials. Here is an example `.samusrc`:
+You can create a `.samusrc` file in your `$HOME` directory, to specify your
+server and optional credentials. Here is an example `.samusrc`:
 
 ```json
 {
-  "defaultServer": {
+  "servers": [{
     "url": "example.com",
     "credentials": {
       "username": "bob",
       "password": "sup3r-s3cr3t"
     }
-  }
+  }]
 }
 ```
 
@@ -58,8 +58,6 @@ enough, someone could have the same):
 
 ```json
 {
-  "defaultServer": {
-    "sync": "my-super-unique-identifier"
-  }
+  "sync": "my-super-unique-identifier"
 }
 ```
