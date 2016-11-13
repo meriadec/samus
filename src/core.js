@@ -144,6 +144,35 @@ class Samus {
 
   }
 
+  renderList (items) {
+
+    this.list = blessed.list({
+      items: items.map(this.checkmarkText.bind(this)),
+      parent: this.screen,
+      label: ` ${this.url} `,
+      ...defaultListOpts
+    })
+
+    this.list.on('select', (item) => {
+      const text = item.getText()
+      if (text === '../') {
+        const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
+        if (!isRoot) {
+          this.url = this.url.substring(0, this.url.lastIndexOf('/'))
+          this.load()
+        }
+      } else if (text[text.length - 1] === '/') {
+        this.navigate(text.substr(0, text.length - 1))
+      } else {
+        this.output(encodeURI(text.substr(4)))
+      }
+    })
+
+    this.list.focus()
+    this.screen.render()
+
+  }
+
   load () {
 
     if (this.list) { this.screen.remove(this.list) }
@@ -152,37 +181,7 @@ class Samus {
     this.loader.load(`▶ Loading ${this.url}`)
 
     fetch(this.url, this.credentials)
-      .then(items => {
-        this.list = blessed.list({
-          items: items.map(this.checkmarkText.bind(this)),
-          parent: this.screen,
-          border: 'line',
-          label: ` ${this.url} `,
-          keys: true,
-          style: {
-            selected: {
-              bg: 'white',
-              fg: 'black'
-            }
-          },
-        })
-        this.list.on('select', (item) => {
-          const text = item.getText()
-          if (text === '../') {
-            const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
-            if (!isRoot) {
-              this.url = this.url.substring(0, this.url.lastIndexOf('/'))
-              this.load()
-            }
-          } else if (text[text.length - 1] === '/') {
-            this.navigate(text.substr(0, text.length - 1))
-          } else {
-            this.output(encodeURI(text.substr(4)))
-          }
-        })
-        this.list.focus()
-        this.screen.render()
-      })
+      .then(::this.renderList)
       .catch(err => {
         if (isBasicAuthErr(err)) {
           this.destroy('This site is protected. You may need to add your credentials in your ~/.samusrc, check README')
