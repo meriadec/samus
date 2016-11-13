@@ -4,7 +4,7 @@ import path from 'path'
 
 const HISTORY_FILE_NAME = path.join(process.env.HOME, '.samus_history')
 
-// hard coded variable!! baaad!! (ps: I don't care, I'm the only user, lol)
+// hard coded variable!! baaad!! (ps: I don't care, we are two to use this, lol)
 const SYNC_URL = 'http://samus-sync.sigsev.io'
 
 let _history = {}

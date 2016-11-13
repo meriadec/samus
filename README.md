@@ -11,9 +11,7 @@ It was build for personal purposes, but you're welcome!
 
 ## Installation
 
-```bash
-npm i -g samus
-```
+    npm i -g samus
 
 ## Usage
 
@@ -48,9 +46,7 @@ server and optional credentials. Here is an example `.samusrc`:
 
 Now, you don't have to specify it anymore, just type:
 
-```bash
-samus
-```
+    samus
 
 If you want your history be synced across multiple devices, add a unique
 identifier in your config (the choice is up to you, if you are not unique
