@@ -1,5 +1,6 @@
 import blessed from 'blessed'
 import { spawn } from 'child_process'
+import { get } from 'lodash'
 
 import fetch from './fetch'
 import * as history from './history'
@@ -19,15 +20,21 @@ class Samus {
 
     this.config = config
     this.args = args
-    this.url = url || (this.config && this.config.defaultServer && this.config.defaultServer.url)
+    this.url = url || get(config, 'defaultServer.url')
 
-    if (this.url && this.url[this.url.length - 1] === '/') {
+    if (!this.url) {
+      console.log('No url provided.')
+      console.log('try `samus -h` to see usage')
+      process.exit(0)
+    }
+
+    if (this.url[this.url.length - 1] === '/') {
       this.url = this.url.substr(0, this.url.length - 1)
     }
 
     this.list = null
     this.authForm = null
-    this.credentials = (this.config && this.config.defaultServer && this.config.defaultServer.credentials) || null
+    this.credentials = get(config, 'defaultServer.credentials', null)
 
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())

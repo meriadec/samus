@@ -16,15 +16,6 @@ Promise.resolve()
   .then(loadConfig)
   .then(config => loadHistory(config).then(() => config))
   .then(config => {
-
     const url = program.args[0]
-
-    if (!url && (!config || !config.defaultServer || !config.defaultServer.url)) {
-      console.log('No url given.')
-      console.log('try `samus -h` to see usage')
-      process.exit(0)
-    }
-
     new Samus(url, config, program)
-
   })
