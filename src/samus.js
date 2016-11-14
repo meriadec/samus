@@ -3,7 +3,7 @@
 import program from 'commander'
 
 import Samus from './core'
-import loadConfig from './load-config'
+import loadConfig, { prettyfyUrl } from './load-config'
 import { load as loadHistory } from './history'
 
 program
@@ -16,15 +16,6 @@ Promise.resolve()
   .then(loadConfig)
   .then(config => loadHistory(config).then(() => config))
   .then(config => {
-
-    const url = program.args[0]
-
-    if (!url && (!config || !config.defaultServer || !config.defaultServer.url)) {
-      console.log('No url given.')
-      console.log('try `samus -h` to see usage')
-      process.exit(0)
-    }
-
+    const url = prettyfyUrl(program.args[0])
     new Samus(url, config, program)
-
   })

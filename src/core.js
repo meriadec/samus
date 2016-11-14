@@ -1,5 +1,6 @@
 import blessed from 'blessed'
 import { spawn } from 'child_process'
+import { get } from 'lodash'
 
 import fetch from './fetch'
 import * as history from './history'
@@ -13,21 +14,38 @@ const isBasicAuthErr = err => (
   && err.response.headers['www-authenticate'].indexOf('Basic') > -1
 )
 
+const defaultListOpts = {
+  border: 'line',
+  keys: true,
+  style: {
+    selected: {
+      bg: 'white',
+      fg: 'black'
+    }
+  },
+}
+
 class Samus {
 
   constructor (url, config, args) {
 
     this.config = config
     this.args = args
-    this.url = url || (this.config && this.config.defaultServer && this.config.defaultServer.url)
+    this.url = url || get(config, 'servers[0].url')
 
-    if (this.url && this.url[this.url.length - 1] === '/') {
-      this.url = this.url.substr(0, this.url.length - 1)
+    if (config.servers.length > 1) {
+      this.shouldPickServer = true
+    }
+
+    if (!this.url) {
+      console.log('No url provided.')
+      console.log('try `samus -h` to see usage')
+      process.exit(0)
     }
 
     this.list = null
     this.authForm = null
-    this.credentials = (this.config && this.config.defaultServer && this.config.defaultServer.credentials) || null
+    this.credentials = get(config, 'servers[0].credentials')
 
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
@@ -56,7 +74,6 @@ class Samus {
   }
 
   buildArgs (text) {
-
     const args = ['--quiet']
     const name = this.getFullUrl(text)
 
@@ -106,41 +123,65 @@ class Samus {
     this.load()
   }
 
+  pickServer () {
+
+    this.list = blessed.list({
+      items: this.config.servers.map(s => s.url),
+      parent: this.screen,
+      label: 'Pick your server',
+      ...defaultListOpts
+    })
+
+    this.list.on('select', (item, i) => {
+      this.url = get(this.config, `servers[${i}].url`)
+      this.credentials = get(this.config, `servers[${i}].credentials`)
+      this.shouldPickServer = false
+      this.load()
+    })
+
+    this.list.focus()
+    this.screen.render()
+
+  }
+
+  renderList (items) {
+
+    this.list = blessed.list({
+      items: items.map(this.checkmarkText.bind(this)),
+      parent: this.screen,
+      label: ` ${this.url} `,
+      ...defaultListOpts
+    })
+
+    this.list.on('select', (item) => {
+      const text = item.getText()
+      if (text === '../') {
+        const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
+        if (!isRoot) {
+          this.url = this.url.substring(0, this.url.lastIndexOf('/'))
+          this.load()
+        }
+      } else if (text[text.length - 1] === '/') {
+        this.navigate(text.substr(0, text.length - 1))
+      } else {
+        this.output(encodeURI(text.substr(4)))
+      }
+    })
+
+    this.list.focus()
+    this.screen.render()
+
+  }
+
   load () {
+
     if (this.list) { this.screen.remove(this.list) }
+    if (this.shouldPickServer) { return this.pickServer() }
+
     this.loader.load(`▶ Loading ${this.url}`)
+
     fetch(this.url, this.credentials)
-      .then(items => {
-        this.list = blessed.list({
-          items: items.map(this.checkmarkText.bind(this)),
-          parent: this.screen,
-          border: 'line',
-          label: ` ${this.url} `,
-          keys: true,
-          style: {
-            selected: {
-              bg: 'white',
-              fg: 'black'
-            }
-          },
-        })
-        this.list.on('select', (item) => {
-          const text = item.getText()
-          if (text === '../') {
-            const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
-            if (!isRoot) {
-              this.url = this.url.substring(0, this.url.lastIndexOf('/'))
-              this.load()
-            }
-          } else if (text[text.length - 1] === '/') {
-            this.navigate(text.substr(0, text.length - 1))
-          } else {
-            this.output(encodeURI(text.substr(4)))
-          }
-        })
-        this.list.focus()
-        this.screen.render()
-      })
+      .then(::this.renderList)
       .catch(err => {
         if (isBasicAuthErr(err)) {
           this.destroy('This site is protected. You may need to add your credentials in your ~/.samusrc, check README')
@@ -149,6 +190,7 @@ class Samus {
         }
       })
       .then(() => this.loader.stop())
+
   }
 
 }

@@ -1,11 +1,10 @@
 import r from 'superagent'
 import fs from 'fs'
 import path from 'path'
-import _ from 'lodash'
 
 const HISTORY_FILE_NAME = path.join(process.env.HOME, '.samus_history')
 
-// hard coded variable!! baaad!! (ps: I don't care, I'm the only user, lol)
+// hard coded variable!! baaad!! (ps: I don't care, we are two to use this, lol)
 const SYNC_URL = 'http://samus-sync.sigsev.io'
 
 let _history = {}
@@ -27,7 +26,7 @@ function hash (str) {
 
 export function load (config) {
   return new Promise((resolve, reject) => {
-    _syncId = _.get(config, 'defaultServer.sync', null)
+    _syncId = config.sync
     if (_syncId) {
       r.get(`${SYNC_URL}/history/${_syncId}`).end((err, res) => {
         if (err) { return resolve() }
