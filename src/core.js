@@ -77,8 +77,22 @@ class Samus {
     const args = ['--quiet']
     const name = this.getFullUrl(text)
 
-    if (this.args.fullscreen) {
+    if (this.config.fullscreen || this.args.fullscreen) {
       args.push('--fs')
+    }
+
+    const preferredAudio = get(this.config, 'audio.preferred')
+    if (preferredAudio) {
+      args.push(`--alang=${preferredAudio}`)
+    }
+
+    const preferredSubs = get(this.config, 'subs.preferred')
+    if (preferredSubs) {
+      args.push(`--slang=${preferredSubs}`)
+    }
+
+    if (get(this.config, 'subs.hidden')) {
+      args.push('--no-sub-visibility')
     }
 
     args.push(name)

@@ -30,7 +30,15 @@ It was build for personal purposes, but you're welcome!
 #### the `.samusrc` file
 
 You can create a `.samusrc` file in your `$HOME` directory, to specify your
-server and optional credentials. Here is an example `.samusrc`:
+server(s) with optional credentials.
+
+The `servers` property with a valid url is the only requirement. All other
+options you'll see below are strictly optional. Not providing them will leave
+you with mpv default's.
+
+If you want your history be synced across multiple devices, you can also add
+a unique identifier in your config (the choice is up to you, if you are not
+:snowflake: enough, someone could have the same).
 
 ```json
 {
@@ -40,20 +48,19 @@ server and optional credentials. Here is an example `.samusrc`:
       "username": "bob",
       "password": "sup3r-s3cr3t"
     }
-  }]
-}
-```
-
-Now, you don't have to specify it anymore, just type:
-
-    samus
-
-If you want your history be synced across multiple devices, add a unique
-identifier in your config (the choice is up to you, if you are not unique
-enough, someone could have the same):
-
-```json
-{
+  }],
+  "fullscreen": true,
+  "audio": {
+    "preferred": "eng,en,fre,fr"
+  },
+  "subs": {
+    "preferred": "fre,fr",
+    "hidden": true
+  },
   "sync": "my-super-unique-identifier"
 }
 ```
+
+And let the magic begin.
+
+    samus
