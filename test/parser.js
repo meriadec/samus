@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import parseItems from '../src/parse-items'
+import parseItems from '../src/helpers/parse-items'
 
 test('it should extract links', t => {
 
@@ -18,7 +18,7 @@ test('it should extract links', t => {
   t.deepEqual(parsed, [
     '../',
     'first.link/',
-    'second%20link/'
+    'second link/'
   ])
 
 })
