@@ -1,10 +1,4 @@
-<p align="center">
-  <img src="http://media.sigsev.io/samus.jpg" width="200">
-</p>
-
 # samus
-
-[![samus](https://nodei.co/npm/samus.png)](https://www.npmjs.com/package/samus)
 
 Samus let you select a file from a basic HTTP website, then launch [mpv](https://mpv.io/) with it.
 It was build for personal purposes, but you're welcome!
@@ -16,13 +10,13 @@ It was build for personal purposes, but you're welcome!
 ## Usage
 
 ```bash
-  Usage: samus [options] <url>
+Usage: samus [options] <url>
 
-  Options:
+Options:
 
-    -h, --help        output usage information
-    -V, --version     output the version number
-    -f, --fullscreen  launch mpv in fullscreen
+  -h, --help        output usage information
+  -V, --version     output the version number
+  -f, --fullscreen  launch mpv in fullscreen
 ```
 
 ## Configuration
