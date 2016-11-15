@@ -2,9 +2,9 @@
 
 import program from 'commander'
 
-import Samus from './core'
-import loadConfig, { prettyfyUrl } from './load-config'
-import { load as loadHistory } from './history'
+import Samus from './Samus'
+import loadConfig, { prettyfyUrl } from './helpers/load-config'
+import { load as loadHistory } from './helpers/history'
 
 program
   .version('1.3.0')

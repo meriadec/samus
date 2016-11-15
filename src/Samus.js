@@ -2,8 +2,8 @@ import blessed from 'blessed'
 import { spawn } from 'child_process'
 import { get } from 'lodash'
 
-import fetch from './fetch'
-import * as history from './history'
+import fetch from './helpers/fetch'
+import * as history from './helpers/history'
 
 const isBasicAuthErr = err => (
   err.status
