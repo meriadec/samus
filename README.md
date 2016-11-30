@@ -1,4 +1,4 @@
-# samus
+# samus [![build](https://img.shields.io/travis/meriadec/samus.svg?style=flat-square)](https://travis-ci.org/meriadec/samus)
 
 Samus let you select a file from a basic HTTP website, then launch [mpv](https://mpv.io/) with it.
 It was build for personal purposes, but you're welcome!
