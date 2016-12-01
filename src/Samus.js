@@ -33,6 +33,7 @@ class Samus {
     this.config = config
     this.args = args
     this.url = url || get(config, 'servers[0].url')
+    this.baseUrl = this.url
 
     if (config.servers.length > 1) {
       this.shouldPickServer = true
@@ -105,9 +106,9 @@ class Samus {
     return history.set(full)
   }
 
-  checkmarkText (text) {
+  checkmarkText ({ text, selected }) {
     if (text === '../' || text[text.length - 1] === '/') { return text }
-    return `[${history.has(this.getFullUrl(encodeURI(text))) ? 'x' : ' '}] ${text}`
+    return `[${selected ? 'x' : ' '}] ${text}`
   }
 
   output (text) {
@@ -149,6 +150,7 @@ class Samus {
 
     this.list.on('select', (item, i) => {
       this.url = get(this.config, `servers[${i}].url`)
+      this.baseUrl = this.url
       this.credentials = get(this.config, `servers[${i}].credentials`)
       this.shouldPickServer = false
       this.load()
@@ -159,23 +161,40 @@ class Samus {
 
   }
 
+  isRoot () {
+    return this.url === this.baseUrl
+  }
+
   renderList (items) {
 
+    const enhancedItems = items
+      .map(text => ({
+        text,
+        selected: history.has(this.getFullUrl(encodeURI(text)))
+      }))
+      .filter(({ text }) => text !== '../' || !this.isRoot())
+
     this.list = blessed.list({
-      items: items.map(this.checkmarkText.bind(this)),
+      items: enhancedItems.map(::this.checkmarkText),
       parent: this.screen,
       label: ` ${this.url} `,
       ...defaultListOpts
     })
 
+    if (this.config.autoSelect && !this.isRoot()) {
+      const lastViewed = enhancedItems
+        .filter(({ text }) => text !== '../')
+        .map(({ selected }) => selected)
+        .lastIndexOf(true)
+
+      this.list.select(lastViewed + 2)
+    }
+
     this.list.on('select', (item) => {
       const text = item.getText()
       if (text === '../') {
-        const isRoot = this.url.replace(/https?:\/\//, '').lastIndexOf('/') === -1
-        if (!isRoot) {
-          this.url = this.url.substring(0, this.url.lastIndexOf('/'))
-          this.load()
-        }
+        this.url = this.url.substring(0, this.url.lastIndexOf('/'))
+        this.load()
       } else if (text[text.length - 1] === '/') {
         this.navigate(text.substr(0, text.length - 1))
       } else {

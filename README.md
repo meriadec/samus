@@ -51,7 +51,8 @@ a unique identifier in your config (the choice is up to you, if you are not
     "preferred": "fre,fr",
     "hidden": true
   },
-  "sync": "my-super-unique-identifier"
+  "sync": "my-super-unique-identifier",
+  "autoSelect": true
 }
 ```
 
