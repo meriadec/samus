@@ -931,9 +931,9 @@ binary-extensions@^1.0.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.7.0.tgz#6c1610db163abfb34edfe42fa423343a1e01185d"
 
-blessed@^0.1.81:
-  version "0.1.81"
-  resolved "https://registry.yarnpkg.com/blessed/-/blessed-0.1.81.tgz#f962d687ec2c369570ae71af843256e6d0ca1129"
+blessed@Apercu/blessed:
+  version "0.1.82"
+  resolved "https://codeload.github.com/Apercu/blessed/tar.gz/546ffd71f9a4a00b6c683fa273c61f81c7e7906a"
 
 block-stream@*:
   version "0.0.9"
