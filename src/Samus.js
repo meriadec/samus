@@ -15,6 +15,7 @@ const isBasicAuthErr = err => (
 )
 
 const defaultListOpts = {
+  loop: true,
   border: 'line',
   keys: true,
   style: {
