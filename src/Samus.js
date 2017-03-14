@@ -98,6 +98,7 @@ class Samus {
     }
 
     args.push(name)
+    args.push('--input-ipc-server=/tmp/mpvsocket')
     return args
   }
 
