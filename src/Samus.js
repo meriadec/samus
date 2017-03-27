@@ -76,7 +76,7 @@ class Samus {
   }
 
   buildArgs (text) {
-    const args = ['--quiet']
+    const args = ['--quiet', '--autofit=90%']
     const name = this.getFullUrl(text)
 
     if (this.config.fullscreen || this.args.fullscreen) {
