@@ -59,3 +59,8 @@ a unique identifier in your config (the choice is up to you, if you are not
 And let the magic begin.
 
     samus
+
+## Watch multiple files
+
+You can create a playlist by pressing `a` on items to select them, before
+launching.
