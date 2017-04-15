@@ -56,18 +56,18 @@
     "blessed": "Apercu/blessed",
     "commander": "^2.9.0",
     "lodash": "^4.16.6",
-    "superagent": "^2.3.0"
+    "superagent": "^3.5.2"
   },
   "devDependencies": {
     "ava": "^0.16.0",
-    "babel-cli": "^6.18.0",
-    "babel-eslint": "^7.1.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-stage-0": "^6.16.0",
-    "babel-register": "^6.18.0",
-    "babel-runtime": "^6.18.0",
-    "babel-template": "^6.16.0",
-    "eslint": "3.9.1",
-    "eslint-config-zavatta": "^4.2.0"
+    "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.2",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "babel-register": "^6.24.1",
+    "babel-runtime": "^6.23.0",
+    "babel-template": "^6.24.1",
+    "eslint": "^3.19.0",
+    "eslint-config-zavatta": "^4.3.0"
   }
 }
