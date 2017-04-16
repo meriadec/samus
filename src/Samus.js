@@ -191,6 +191,10 @@ class Samus {
 
   renderList () {
 
+    if (this.list) {
+      this.list.destroy()
+    }
+
     this.list = blessed.list({
       items: this.displayedItems.map(::this.checkmarkText),
       parent: this.screen,
