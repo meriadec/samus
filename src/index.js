@@ -2,12 +2,13 @@
 
 import program from 'commander'
 
+import { version } from '../package.json'
 import Samus from './Samus'
 import loadConfig, { prettyfyUrl } from './helpers/load-config'
 import { load as loadHistory } from './helpers/history'
 
 program
-  .version('1.3.0')
+  .version(version)
   .usage('[options] <url>')
   .option('-f, --fullscreen', 'launch mpv in fullscreen')
   .parse(process.argv)
