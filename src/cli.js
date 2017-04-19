@@ -13,7 +13,7 @@ program
   .parse(process.argv)
 
 const options = {
-  url: program.url || null,
+  url: program.args[0] || null,
   fullscreen: !!program.fullscreen,
 }
 
