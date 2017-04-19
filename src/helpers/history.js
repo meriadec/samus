@@ -33,9 +33,9 @@ exports.isViewed = (key) => {
   return !!_history[hash(key)]
 }
 
-exports.set = (key) => {
+exports.markRead = (url) => {
   return new Promise(resolve => {
-    const h = hash(key)
+    const h = hash(url)
     if (_syncID) {
       r.post(`${SYNC_URL}/history/${_syncID}/${h}`).end(resolve)
     } else {

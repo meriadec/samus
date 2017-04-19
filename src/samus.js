@@ -8,7 +8,7 @@ const {
 const enrichItems = require('./helpers/enrichItems')
 const fetch = require('./helpers/fetch')
 const launchMpv = require('./helpers/mpv')
-const { loadHistory } = require('./helpers/history')
+const { loadHistory, markRead } = require('./helpers/history')
 const { hash } = require('./helpers/strings')
 
 const filesList = require('./ui/filesList')
@@ -28,6 +28,8 @@ class Samus {
       this.exit('No server specified', 1)
     }
 
+    this.server = this.servers[0]
+
     this._LIST_STATE_CACHE_ = {}
 
     this.state = {
@@ -35,7 +37,6 @@ class Samus {
       isLoadingList: false,
       isPlaying: false,
       location: null,
-      server: this.servers[0],
       items: [],
       playlist: [],
     }
@@ -71,7 +72,7 @@ class Samus {
     await loadHistory(this.config)
     this.setState({ isLoadingGlobal: false })
 
-    await this.load(this.state.server.url)
+    await this.load(this.server.url)
 
   }
 
@@ -79,10 +80,10 @@ class Samus {
 
     this.setState({ isLoadingList: true })
 
-    const rawItems = await fetch(url, this.state.server.credentials)
+    const rawItems = await fetch(url, this.server.credentials)
     const items = enrichItems(rawItems, url, this.state.playlist)
 
-    if (url !== this.state.server.url) {
+    if (url !== this.server.url) {
       const u = url.substring(0, url.lastIndexOf('/'))
       items.unshift({ isFolder: true, name: '..', url: u })
     }
@@ -101,6 +102,14 @@ class Samus {
     child.on('exit', () => {
       this.setState({ isPlaying: false })
     })
+
+    // TODO: history actually works only with 1 file, because I don't want
+    // to mark as read an entire fucking playlist if I watch only 1 episode
+    //
+    // we may find a way to mark as read episodes as they are played
+    if (files.length === 1) {
+      markRead(files[0])
+    }
 
   }
 
@@ -141,7 +150,15 @@ class Samus {
         },
       },
       items: this.servers.map(server => {
-        return server.name || server.url
+        return {
+          text: server.name || server.url,
+          callback: () => {
+            if (this.server === server) { return }
+            this.server = server
+            this._LIST_STATE_CACHE_ = {}
+            this.load(this.server.url)
+          },
+        }
       }),
       autoCommandKeys: true,
     })
