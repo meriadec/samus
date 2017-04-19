@@ -1,6 +1,6 @@
 {
   "name": "samus",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "mpv remote selector",
   "bin": {
     "samus": "./src/cli.js"

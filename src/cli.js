@@ -2,7 +2,7 @@
 
 const program = require('commander')
 
-const version = require('../package.json')
+const { version } = require('../package.json')
 const samus = require('./samus')
 const loadConfig = require('./helpers/loadConfig')
 
