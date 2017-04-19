@@ -1,0 +1,12 @@
+{
+  "servers": [
+    {
+      "name": "Home",
+      "url": "http://mock.fake"
+    },
+    {
+      "url": "http://mock2.fake"
+    }
+  ],
+  "sync": "mock"
+}

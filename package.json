@@ -1,72 +1,33 @@
 {
   "name": "samus",
-  "version": "3.4.2",
+  "version": "4.0.0",
   "description": "mpv remote selector",
   "bin": {
-    "samus": "./lib/index.js"
+    "samus": "./src/cli.js"
   },
   "scripts": {
-    "start": "babel-node src",
-    "clean": "rm -rf lib",
-    "build": "npm run clean && babel src --out-dir lib && chmod +x lib/index.js",
-    "test": "ava",
-    "lint": "eslint src test"
+    "start": "node src/cli",
+    "mock": "SAMUS_MOCK=1 node src/cli",
+    "lint": "eslint src"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/meriadec/samus.git"
   },
-  "keywords": [
-    "select",
-    "remote"
-  ],
   "author": "meriadec <meriadec.pillet@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/meriadec/samus/issues"
   },
   "homepage": "https://github.com/meriadec/samus#readme",
-  "ava": {
-    "babel": "inherit",
-    "require": [
-      "babel-register"
-    ]
-  },
-  "babel": {
-    "presets": [
-      "es2015",
-      "stage-0"
-    ]
-  },
-  "eslintConfig": {
-    "extends": [
-      "zavatta"
-    ],
-    "rules": {
-      "no-new": 0,
-      "no-console": 0,
-      "no-cond-assign": 0,
-      "comma-dangle": 0
-    },
-    "globals": {
-      "Promise": false
-    }
-  },
   "dependencies": {
     "blessed": "Apercu/blessed",
+    "chalk": "^1.1.3",
     "commander": "^2.9.0",
     "lodash": "^4.16.6",
     "superagent": "^3.5.2"
   },
   "devDependencies": {
-    "ava": "^0.19.1",
-    "babel-cli": "^6.24.1",
-    "babel-eslint": "^7.2.2",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-0": "^6.24.1",
-    "babel-register": "^6.24.1",
-    "babel-runtime": "^6.23.0",
-    "babel-template": "^6.24.1",
     "eslint": "^3.19.0",
     "eslint-config-zavatta": "^4.3.0"
   }

@@ -5,8 +5,10 @@ export default text => {
   const links = []
 
   let link
-  while (link = linkRegex.exec(text)) {
-    links.push(decodeURI(link[1]))
+  while (link = linkRegex.exec(text)) { // eslint-disable-line
+    if (link !== '../') {
+      links.push(decodeURI(link[1]))
+    }
   }
 
   return links

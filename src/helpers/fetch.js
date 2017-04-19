@@ -1,19 +1,47 @@
-import r from 'superagent'
+const r = require('superagent')
 
-import parseItems from './parse-items'
+const { wait } = require('./mock')
 
-export default (url, creds) => new Promise((resolve, reject) => {
+const linkRegex = new RegExp('<a href="([^"]*)"', 'g')
+const cache = process.env.SAMUS_MOCK
+  ? require('../../mock/data')
+  : {}
 
-  const req = r.get(url)
+module.exports = async (url, credentials) => {
 
-  if (creds) {
-    req.auth(creds.username, creds.password)
+  if (process.env.SAMUS_MOCK) {
+    await wait(200)
   }
 
-  req.end((err, res) => {
-    if (err) { return reject(err) }
-    if (res.text.indexOf('Index of') === -1) { return resolve(['../']) }
-    resolve(parseItems(res.text))
-  })
+  const rawItems = cache[url] || await xhrFetch(url, credentials)
+  cache[url] = rawItems
 
-})
+  return rawItems
+}
+
+function parseItems (text) {
+  const links = []
+  let link
+  while (link = linkRegex.exec(text)) { // eslint-disable-line
+    links.push(decodeURI(link[1]))
+  }
+  return links
+}
+
+function xhrFetch (url, credentials) {
+  return new Promise((resolve, reject) => {
+
+    const req = r.get(url)
+
+    if (credentials) {
+      req.auth(credentials.username, credentials.password)
+    }
+
+    req.end((err, res) => {
+      if (err) { return reject(err) }
+      if (res.text.indexOf('Index of') === -1) { return resolve(['../']) }
+      resolve(parseItems(res.text))
+    })
+
+  })
+}
