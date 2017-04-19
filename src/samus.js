@@ -1,13 +1,17 @@
 const blessed = require('blessed')
-const { get } = require('lodash')
+const chalk = require('chalk')
+const {
+  get,
+  cloneDeep,
+} = require('lodash')
 
-const { isViewed } = require('./helpers/history')
+const enrichItems = require('./helpers/enrichItems')
 const fetch = require('./helpers/fetch')
 const launchMpv = require('./helpers/mpv')
 const { loadHistory } = require('./helpers/history')
+const { hash } = require('./helpers/strings')
 
 const filesList = require('./ui/filesList')
-const loader = require('./ui/loader')
 
 class Samus {
 
@@ -15,7 +19,6 @@ class Samus {
 
     this.options = options
     this.config = config
-    this.playlist = []
 
     this.servers = options.url
       ? [{ url: options.url }]
@@ -25,25 +28,21 @@ class Samus {
       this.exit('No server specified', 1)
     }
 
-    this.serverIndex = 0
+    this._LIST_STATE_CACHE_ = {}
 
-    this.screen = blessed.screen({ smartCSR: true })
-    this.screen.key(
-      ['escape', 'q', 'C-c'],
-      () => this.screen.destroy()
-    )
+    this.state = {
+      isLoadingGlobal: false,
+      isLoadingList: false,
+      isPlaying: false,
+      location: null,
+      server: this.servers[0],
+      items: [],
+      playlist: [],
+    }
 
+    this.draw()
     this.init()
 
-  }
-
-  async init () {
-    this.drawTabs()
-    this.drawView()
-    this.showLoader('Loading history...')
-    await loadHistory(this.config)
-    const server = this.servers[this.serverIndex]
-    await this.load(server.url)
   }
 
   exit (msg, code = 0) {
@@ -56,66 +55,106 @@ class Samus {
     process.exit(code)
   }
 
-  async load (url) {
-    const server = this.servers[this.serverIndex]
-    this.location = url
-
-    this.showLoader('Fetching data...')
-
-    const rawItems = await fetch(this.location, server.credentials)
-    this.items = this.enrichItems(rawItems, this.location)
-
-    if (this.location !== server.url) {
-      this.items.unshift({
-        isFolder: true,
-        name: '..',
-        url: this.location.substring(0, this.location.lastIndexOf('/')),
-      })
+  setState (state) {
+    try {
+      this.prevState = cloneDeep(this.state)
+      Object.assign(this.state, state)
+      this.render()
+    } catch (err) {
+      this.exit(err, 1)
     }
-
-    this.hideLoader()
-
-    this.drawList()
   }
 
-  enrichItems (rawItems, url) {
-    return rawItems
-      .filter(text => text !== '../')
-      .map(text => {
-        let full = `${url}/${text}`
-        const isFolder = text[text.length - 1] === '/'
-        if (isFolder) {
-          full = full.substr(0, full.length - 1)
-        }
-        return {
-          name: text,
-          url: full,
-          isFolder,
-          isViewed: isViewed(full),
-          isSelected: !!this.playlist.find(u => u === full),
-        }
-      })
+  async init () {
+
+    this.setState({ isLoadingGlobal: true })
+    await loadHistory(this.config)
+    this.setState({ isLoadingGlobal: false })
+
+    await this.load(this.state.server.url)
+
+  }
+
+  async load (url) {
+
+    this.setState({ isLoadingList: true })
+
+    const rawItems = await fetch(url, this.state.server.credentials)
+    const items = enrichItems(rawItems, url, this.state.playlist)
+
+    if (url !== this.state.server.url) {
+      const u = url.substring(0, url.lastIndexOf('/'))
+      items.unshift({ isFolder: true, name: '..', url: u })
+    }
+
+    this.setState({ isLoadingList: false, items, location: url })
+
   }
 
   play (url) {
 
-    const files = this.playlist.length ? this.playlist : [url]
+    const files = this.state.playlist.length ? this.state.playlist : [url]
     const child = launchMpv(files, this.options, this.config)
 
-    this.showPlaying()
+    this.setState({ isPlaying: true })
 
-    child.on('exit', () => this.hidePlaying())
+    child.on('exit', () => {
+      this.setState({ isPlaying: false })
+    })
 
   }
 
-  drawList (listState) {
-    if (this.list) {
-      this.list.destroy()
+  backupListState () {
+    if (!this.state.location) { return }
+    this._LIST_STATE_CACHE_[hash(this.state.location)] = {
+      selected: this.list.selected,
+      scroll: this.list.getScroll(),
     }
+  }
+
+  getBackupListState () {
+    if (!this.state.location) { return null }
+    return this._LIST_STATE_CACHE_[hash(this.state.location)] || null
+  }
+
+  debug (msg) {
+    if (!process.env.SAMUS_DEBUG) { return }
+    if (!this._LAST_TICK_) { this._LAST_TICK_ = Date.now() }
+    const now = Date.now()
+    const ts = chalk.red(`(${now - this._LAST_TICK_}ms)`)
+    this.debugUI.add(`${ts} ${msg}`)
+    this._LAST_TICK_ = now
+  }
+
+  draw () {
+    this.screen = blessed.screen({ smartCSR: true })
+    this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
+
+    this.tabs = blessed.listbar({
+      top: 0,
+      left: 0,
+      height: 1,
+      style: {
+        selected: {
+          bg: 'green',
+          fg: 'black',
+        },
+      },
+      items: this.servers.map(server => {
+        return server.name || server.url
+      }),
+      autoCommandKeys: true,
+    })
+
+    this.view = blessed.box({
+      top: 2,
+      left: 1,
+    })
 
     this.list = filesList({
-      items: this.items,
+      items: this.state.items,
       onSelect: item => {
+        this.backupListState()
         if (item.isFolder) {
           this.load(item.url)
         } else {
@@ -137,84 +176,107 @@ class Samus {
       },
     })
 
-    // restore last list position/scroll
-    if (listState) {
-      this.list.select(listState.selected)
-      this.list.scroll(listState.scroll)
-    }
-
-    this.view.append(this.list)
-    this.list.focus()
-    this.screen.render()
-  }
-
-  drawView () {
-    this.view = blessed.box({
-      top: 2,
-      padding: 1,
-    })
-    this.screen.append(this.view)
-  }
-
-  drawTabs () {
-    if (this.tabs) {
-      this.tabs.destroy()
-    }
-    this.tabs = blessed.listbar({
-      top: 1,
-      left: 0,
-      height: 1,
+    this.globalLoader = blessed.text({
+      top: 0,
+      right: 0,
+      content: 'Establishing connection...',
       style: {
-        selected: {
-          bg: 'green',
-          fg: 'black',
-        },
+        fg: 'yellow',
       },
-      items: this.servers.map(server => {
-        return server.name || server.url
-      }),
-      autoCommandKeys: true,
     })
-    this.screen.append(this.tabs)
-    this.screen.render()
-  }
 
-  showLoader (msg) {
-    if (this.loader) {
-      this.loader.destroy()
-    }
-    this.loader = loader(msg)
-    this.view.append(this.loader)
-    this.screen.render()
-  }
-
-  hideLoader () {
-    this.loader.destroy()
-  }
-
-  showPlaying () {
-    if (this.playingBox) {
-      this.playingBox.destroy()
-    }
-    this.playingBox = blessed.text({
-      content: 'Playing',
+    this.playBox = blessed.text({
       top: 'center',
       left: 'center',
       padding: 1,
+      border: 'line',
       style: {
-        bg: 'white',
+        bg: 'red',
         fg: 'black',
+        border: {
+          fg: 'red',
+        },
+      },
+      content: '  Playing...  ',
+    })
+
+    this.debugUI = blessed.log({
+      bottom: 0,
+      right: 0,
+      height: 30,
+      border: {
+        type: 'line',
+      },
+      style: {
       },
     })
 
-    this.view.append(this.playingBox)
-    this.screen.render()
+    this.globalLoader.hide()
+    this.playBox.hide()
+
+    this.screen.append(this.view)
+    this.screen.append(this.tabs)
+
+    if (process.env.SAMUS_DEBUG) {
+      this.screen.append(this.debugUI)
+    }
+
+    this.view.append(this.list)
+    this.screen.append(this.globalLoader)
+    this.screen.append(this.playBox)
   }
 
-  hidePlaying () {
-    this.view.remove(this.playingBox)
-    this.playingBox.destroy()
+  render () {
+
+    if (!this._NB_RENDER_) { this._NB_RENDER_ = 0 }
+    ++this._NB_RENDER_
+
+    const {
+      state,
+      prevState,
+    } = this
+
+    // this.debug(JSON.stringify(omit(state, ['items'])))
+
+    if (state.isLoadingGlobal && !prevState.isLoadingGlobal) {
+      this.globalLoader.show()
+    } else if (!state.isLoadingGlobal && prevState.isLoadingGlobal) {
+      this.globalLoader.hide()
+    }
+
+    if (state.isLoadingList && !prevState.isLoadingList) {
+      this.list.style.selected.bg = 'yellow'
+      this.globalLoader.setContent('Loading list...')
+      this.globalLoader.show()
+    } else if (!state.isLoadingList && prevState.isLoadingList) {
+      this.list.style.selected.bg = 'white'
+      this.globalLoader.hide()
+    }
+
+    if (state.items !== prevState.items) {
+      const listState = this.getBackupListState()
+      if (listState) {
+        this.list.select(listState.selected)
+        this.list.scroll(listState.scroll)
+      } else {
+        this.list.select(0)
+        this.list.scroll(0)
+      }
+      this.list.setItems(state.items)
+      this.list.focus()
+    }
+
+    if (state.isPlaying && !prevState.isPlaying) {
+      this.list.interactive = false
+      this.playBox.show()
+    } else if (!state.isPlaying && prevState.isPlaying) {
+      this.list.interactive = true
+      this.playBox.hide()
+    }
+
+    this.debug(`render ${this._NB_RENDER_}`)
     this.screen.render()
+
   }
 
 }

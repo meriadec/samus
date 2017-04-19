@@ -20,16 +20,24 @@ module.exports = (props) => {
     onToggle,
   } = props
 
+  let _items = items
+
   const list = blessed.list(Object.assign({
     items: items.map(renderItem),
   }, listOpts))
 
+  list._rawSetItems = list.setItems
+  list.setItems = items => {
+    _items = items
+    list._rawSetItems(items.map(renderItem))
+  }
+
   list.key(['a'], () => {
-    onToggle(items[list.selected])
+    onToggle(_items[list.selected])
   })
 
   list.on('select', (item, i) => {
-    onSelect(items[i])
+    onSelect(_items[i])
   })
 
   return list

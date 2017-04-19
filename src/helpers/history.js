@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 
 const { wait } = require('./mock')
+const { hash } = require('./strings')
 
 const HISTORY_FILE_NAME = path.join(process.env.HOME, '.samus_history')
 
@@ -11,20 +12,6 @@ const SYNC_URL = 'http://samus-sync.sigsev.io'
 
 let _history = {}
 let _syncID = null
-
-function hash (str) {
-  let hash = 0
-  let i
-  let chr
-  let len
-  if (str.length === 0) { return hash }
-  for (i = 0, len = str.length; i < len; i++) {
-    chr = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + chr
-    hash |= 0
-  }
-  return Math.abs(hash)
-}
 
 exports.loadHistory = async (config) => {
 
