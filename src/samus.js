@@ -181,15 +181,16 @@ class Samus {
       onToggle: item => {
         item.isSelected = !item.isSelected
         if (item.isSelected) {
-          this.playlist.push(item.url)
+          this.state.playlist.push(item.url)
         } else {
-          this.playlist = this.playlist.filter(u => u !== item.url)
+          this.playlist = this.state.playlist.filter(u => u !== item.url)
         }
+        this.backupListState()
         const listState = {
           selected: this.list.selected,
           scroll: this.list.getScroll(),
         }
-        this.drawList(listState)
+        this.render()
       },
     })
 
