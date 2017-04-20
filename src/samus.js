@@ -268,6 +268,7 @@ class Samus {
     }
 
     if (state.items !== prevState.items) {
+      this.list.setItems(state.items)
       const listState = this.getBackupListState()
       if (listState) {
         this.list.select(listState.selected)
@@ -276,7 +277,6 @@ class Samus {
         this.list.select(0)
         this.list.scroll(0)
       }
-      this.list.setItems(state.items)
       this.list.focus()
     }
 
