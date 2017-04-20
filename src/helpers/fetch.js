@@ -1,4 +1,5 @@
 const r = require('superagent')
+const { get } = require('lodash')
 
 const { wait } = require('./mock')
 
@@ -7,13 +8,19 @@ const cache = process.env.SAMUS_MOCK
   ? require('../../mock/data')
   : {}
 
-module.exports = async (url, credentials) => {
+module.exports = async (url, credentials, config) => {
 
   if (process.env.SAMUS_MOCK) {
     await wait(200)
   }
 
-  const rawItems = cache[url] || await xhrFetch(url, credentials)
+  let rawItems = cache[url] || await xhrFetch(url, credentials)
+
+  const ignoredExtensions = get(config, 'ignoreExtensions', [])
+  rawItems = rawItems.filter(t => {
+    return !(ignoredExtensions.some(ext => t.endsWith(ext)))
+  })
+
   cache[url] = rawItems
 
   return rawItems

@@ -80,7 +80,7 @@ class Samus {
 
     this.setState({ isLoadingList: true })
 
-    const rawItems = await fetch(url, this.server.credentials)
+    const rawItems = await fetch(url, this.server.credentials, this.config)
     const items = enrichItems(rawItems, url, this.state.playlist)
 
     if (url !== this.server.url) {
@@ -186,10 +186,6 @@ class Samus {
           this.playlist = this.state.playlist.filter(u => u !== item.url)
         }
         this.backupListState()
-        const listState = {
-          selected: this.list.selected,
-          scroll: this.list.getScroll(),
-        }
         this.render()
       },
     })
