@@ -171,6 +171,7 @@ class Samus {
     this.list = filesList({
       items: this.state.items,
       onSelect: item => {
+        if (!item) { return }
         this.backupListState()
         if (item.isFolder) {
           this.load(item.url)
