@@ -4,6 +4,7 @@ const chalk = require('chalk')
 const listOpts = {
   loop: true,
   keys: true,
+  vi: true,
   style: {
     selected: {
       bg: 'white',
@@ -12,19 +13,20 @@ const listOpts = {
   },
 }
 
-module.exports = (props) => {
-
-  const {
-    items,
-    onSelect,
-    onToggle,
-  } = props
+module.exports = props => {
+  const { items, search, onSelect, onToggle } = props
 
   let _items = items
 
-  const list = blessed.list(Object.assign({
-    items: items.map(renderItem),
-  }, listOpts))
+  const list = blessed.list(
+    Object.assign(
+      {
+        search,
+        items: items.map(renderItem),
+      },
+      listOpts,
+    ),
+  )
 
   list._rawSetItems = list.setItems
   list.setItems = items => {
@@ -43,10 +45,8 @@ module.exports = (props) => {
   return list
 }
 
-function renderItem (item) {
-  const lineColor = item.isFolder
-    ? chalk.blue
-    : i => i
+function renderItem(item) {
+  const lineColor = item.isFolder ? chalk.blue : i => i
   const res = []
   if (!item.isFolder) {
     if (item.isViewed) {

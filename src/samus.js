@@ -1,9 +1,6 @@
 const blessed = require('blessed')
 const chalk = require('chalk')
-const {
-  get,
-  cloneDeep,
-} = require('lodash')
+const { get, cloneDeep } = require('lodash')
 
 const enrichItems = require('./helpers/enrichItems')
 const fetch = require('./helpers/fetch')
@@ -14,15 +11,11 @@ const { hash } = require('./helpers/strings')
 const filesList = require('./ui/filesList')
 
 class Samus {
-
-  constructor (options, config) {
-
+  constructor(options, config) {
     this.options = options
     this.config = config
 
-    this.servers = options.url
-      ? [{ url: options.url }]
-      : get(config, 'servers', [])
+    this.servers = options.url ? [{ url: options.url }] : get(config, 'servers', [])
 
     if (!this.servers.length) {
       this.exit('No server specified', 1)
@@ -39,14 +32,14 @@ class Samus {
       location: null,
       items: [],
       playlist: [],
+      filter: '',
     }
 
     this.draw()
     this.init()
-
   }
 
-  exit (msg, code = 0) {
+  exit(msg, code = 0) {
     if (this.screen) {
       this.screen.destroy()
     }
@@ -56,7 +49,7 @@ class Samus {
     process.exit(code)
   }
 
-  setState (state) {
+  setState(state) {
     try {
       this.prevState = cloneDeep(this.state)
       Object.assign(this.state, state)
@@ -66,18 +59,15 @@ class Samus {
     }
   }
 
-  async init () {
-
+  async init() {
     this.setState({ isLoadingGlobal: true })
     await loadHistory(this.config)
     this.setState({ isLoadingGlobal: false })
 
     await this.load(this.server.url)
-
   }
 
-  async load (url) {
-
+  async load(url) {
     this.setState({ isLoadingList: true })
 
     const rawItems = await fetch(url, this.server.credentials, this.config)
@@ -89,11 +79,9 @@ class Samus {
     }
 
     this.setState({ isLoadingList: false, items, location: url })
-
   }
 
-  play (url) {
-
+  play(url) {
     const files = this.state.playlist.length ? this.state.playlist : [url]
     const child = launchMpv(files, this.options, this.config)
 
@@ -110,32 +98,42 @@ class Samus {
     if (files.length === 1) {
       markRead(files[0])
     }
-
   }
 
-  backupListState () {
-    if (!this.state.location) { return }
+  backupListState() {
+    if (!this.state.location) {
+      return
+    }
+
     this._LIST_STATE_CACHE_[hash(this.state.location)] = {
       selected: this.list.selected,
       scroll: this.list.getScroll(),
     }
   }
 
-  getBackupListState () {
-    if (!this.state.location) { return null }
+  getBackupListState() {
+    if (!this.state.location) {
+      return null
+    }
+
     return this._LIST_STATE_CACHE_[hash(this.state.location)] || null
   }
 
-  debug (msg) {
-    if (!process.env.SAMUS_DEBUG) { return }
-    if (!this._LAST_TICK_) { this._LAST_TICK_ = Date.now() }
+  debug(msg) {
+    if (!process.env.SAMUS_DEBUG) {
+      return
+    }
+
+    if (!this._LAST_TICK_) {
+      this._LAST_TICK_ = Date.now()
+    }
     const now = Date.now()
     const ts = chalk.red(`(${now - this._LAST_TICK_}ms)`)
     this.debugUI.add(`${ts} ${msg}`)
     this._LAST_TICK_ = now
   }
 
-  draw () {
+  draw() {
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
 
@@ -153,7 +151,10 @@ class Samus {
         return {
           text: server.name || server.url,
           callback: () => {
-            if (this.server === server) { return }
+            if (this.server === server) {
+              return
+            }
+
             this.server = server
             this._LIST_STATE_CACHE_ = {}
             this.load(this.server.url)
@@ -163,15 +164,43 @@ class Samus {
       autoCommandKeys: true,
     })
 
+    this.search = blessed.textbox({
+      top: 1,
+      left: 1,
+      height: 1,
+      input: true,
+      inputOnFocus: true,
+      style: {
+        bg: 'black',
+        focus: {
+          bg: 'blue',
+        },
+      },
+    })
+
+    this.search.key('enter', () => {
+      this.setState({ filter: this.search.getValue().toLowerCase() })
+    })
+
     this.view = blessed.box({
-      top: 2,
+      top: 3,
       left: 1,
     })
 
     this.list = filesList({
       items: this.state.items,
+      search: () => {
+        if (this.search.getValue()) {
+          this.search.setValue('')
+          return this.setState({ filter: '' })
+        }
+
+        this.search.focus()
+      },
       onSelect: item => {
-        if (!item) { return }
+        if (!item) {
+          return
+        }
         this.backupListState()
         if (item.isFolder) {
           this.load(item.url)
@@ -222,8 +251,7 @@ class Samus {
       border: {
         type: 'line',
       },
-      style: {
-      },
+      style: {},
     })
 
     this.globalLoader.hide()
@@ -231,6 +259,7 @@ class Samus {
 
     this.screen.append(this.view)
     this.screen.append(this.tabs)
+    this.screen.append(this.search)
 
     if (process.env.SAMUS_DEBUG) {
       this.screen.append(this.debugUI)
@@ -241,15 +270,14 @@ class Samus {
     this.screen.append(this.playBox)
   }
 
-  render () {
+  render() {
+    if (!this._NB_RENDER_) {
+      this._NB_RENDER_ = 0
+    }
 
-    if (!this._NB_RENDER_) { this._NB_RENDER_ = 0 }
     ++this._NB_RENDER_
 
-    const {
-      state,
-      prevState,
-    } = this
+    const { state, prevState } = this
 
     // this.debug(JSON.stringify(omit(state, ['items'])))
 
@@ -268,8 +296,13 @@ class Samus {
       this.globalLoader.hide()
     }
 
-    if (state.items !== prevState.items) {
-      this.list.setItems(state.items)
+    if (state.items !== prevState.items || state.filter !== prevState.filter) {
+      this.list.setItems(
+        state.filter
+          ? state.items.filter(i => i.name === '..' || i.name.toLowerCase().includes(state.filter))
+          : state.items,
+      )
+
       const listState = this.getBackupListState()
       if (listState) {
         this.list.select(listState.selected)
@@ -291,9 +324,7 @@ class Samus {
 
     this.debug(`render ${this._NB_RENDER_}`)
     this.screen.render()
-
   }
-
 }
 
 module.exports = (options, config) => new Samus(options, config)
