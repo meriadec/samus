@@ -85,7 +85,12 @@ class Samus {
     const files = this.state.playlist.length ? this.state.playlist : [url]
     const child = launchMpv(files, this.options, this.config)
 
-    this.setState({ isPlaying: true })
+    this.setState({
+      isPlaying: true,
+      items: this.state.items.map(
+        item => (item.url === url ? Object.assign(item, { isViewed: true }) : item),
+      ),
+    })
 
     child.on('exit', () => {
       this.setState({ isPlaying: false })
