@@ -1,5 +1,5 @@
 {
-  "extends": ["zavatta"],
+  "extends": ["zavatta", "prettier"],
   "globals": {
     "Promise": false,
   },
