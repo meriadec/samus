@@ -64,3 +64,15 @@ And let the magic begin.
 
 You can create a playlist by pressing `a` on items to select them, before
 launching.
+
+## Searching
+
+By pressing `/`, you will enter search mode which will filter the results. It's not
+smart, no fuzzy matching and does not find recursively in the folders, but if you're
+not happy with this you can create a PR. Press again to exit the search.
+
+## Use with ChromeCast
+
+If you have in your possession this wonderful tool configured correctly, a green
+indicator will appear on the top left of samus. You will then be able to press `c`
+on any video to cast it, press `space` to pause/unpause and `c` again to stop.

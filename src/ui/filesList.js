@@ -38,6 +38,10 @@ module.exports = props => {
     onToggle(_items[list.selected])
   })
 
+  list.key(['c'], () => {
+    onSelect(_items[list.selected], 'cast')
+  })
+
   list.on('select', (item, i) => {
     onSelect(_items[i])
   })

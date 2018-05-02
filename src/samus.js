@@ -1,6 +1,7 @@
 const blessed = require('blessed')
 const chalk = require('chalk')
 const { get, cloneDeep } = require('lodash')
+const Chromecast = require('chromecast-js')
 
 const enrichItems = require('./helpers/enrichItems')
 const fetch = require('./helpers/fetch')
@@ -29,6 +30,7 @@ class Samus {
       isLoadingGlobal: false,
       isLoadingList: false,
       isPlaying: false,
+      isPaused: false,
       location: null,
       items: [],
       playlist: [],
@@ -65,6 +67,14 @@ class Samus {
     this.setState({ isLoadingGlobal: false })
 
     await this.load(this.server.url)
+
+    const chromecastBrowser = new Chromecast.Browser()
+    chromecastBrowser.on('deviceOn', device => {
+      device.connect()
+      device.on('connected', () => {
+        this.setState({ device })
+      })
+    })
   }
 
   async load(url) {
@@ -81,9 +91,8 @@ class Samus {
     this.setState({ isLoadingList: false, items, location: url })
   }
 
-  play(url) {
+  play(url, shouldCast) {
     const files = this.state.playlist.length ? this.state.playlist : [url]
-    const child = launchMpv(files, this.options, this.config)
 
     this.setState({
       isPlaying: true,
@@ -92,9 +101,15 @@ class Samus {
       ),
     })
 
-    child.on('exit', () => {
-      this.setState({ isPlaying: false })
-    })
+    if (shouldCast && this.state.device) {
+      // TODO maybe we could save the position for resuming?
+      this.state.device.play(url, 0)
+    } else {
+      const child = launchMpv(files, this.options, this.config)
+      child.on('exit', () => {
+        this.setState({ isPlaying: false })
+      })
+    }
 
     // TODO: history actually works only with 1 file, because I don't want
     // to mark as read an entire fucking playlist if I watch only 1 episode
@@ -142,9 +157,21 @@ class Samus {
     this.screen = blessed.screen({ smartCSR: true })
     this.screen.key(['escape', 'q', 'C-c'], () => this.screen.destroy())
 
-    this.tabs = blessed.listbar({
+    this.chromecast = blessed.box({
       top: 0,
       left: 0,
+      height: 1,
+      width: 4,
+      content: 'Cast',
+      style: {
+        fg: 'white',
+        bg: 'red',
+      },
+    })
+
+    this.tabs = blessed.listbar({
+      top: 0,
+      left: 4,
       height: 1,
       style: {
         selected: {
@@ -202,15 +229,16 @@ class Samus {
 
         this.search.focus()
       },
-      onSelect: item => {
+      onSelect: (item, shouldCast) => {
         if (!item) {
           return
         }
+
         this.backupListState()
         if (item.isFolder) {
           this.load(item.url)
         } else {
-          this.play(item.url)
+          this.play(item.url, shouldCast)
         }
       },
       onToggle: item => {
@@ -246,7 +274,20 @@ class Samus {
           fg: 'red',
         },
       },
-      content: '  Playing...  ',
+    })
+
+    this.playBox.key('space', () => {
+      if (this.state.device) {
+        this.state.device[this.state.isPaused ? 'unpause' : 'pause']()
+        this.setState({ isPaused: !this.state.isPaused })
+      }
+    })
+
+    this.playBox.key('c', () => {
+      if (this.state.device) {
+        this.state.device.stop()
+        this.setState({ isPlaying: false, isPaused: false })
+      }
     })
 
     this.debugUI = blessed.log({
@@ -262,6 +303,7 @@ class Samus {
     this.globalLoader.hide()
     this.playBox.hide()
 
+    this.screen.append(this.chromecast)
     this.screen.append(this.view)
     this.screen.append(this.tabs)
     this.screen.append(this.search)
@@ -285,6 +327,9 @@ class Samus {
     const { state, prevState } = this
 
     // this.debug(JSON.stringify(omit(state, ['items'])))
+
+    this.chromecast.style.bg = state.device ? 'green' : 'red'
+    this.chromecast.style.fg = state.device ? 'black' : 'white'
 
     if (state.isLoadingGlobal && !prevState.isLoadingGlobal) {
       this.globalLoader.show()
@@ -319,9 +364,12 @@ class Samus {
       this.list.focus()
     }
 
-    if (state.isPlaying && !prevState.isPlaying) {
+    this.playBox.content = state.isPaused ? '  Paused.  ' : '  Playing...  '
+
+    if (state.isPlaying) {
       this.list.interactive = false
       this.playBox.show()
+      this.playBox.focus()
     } else if (!state.isPlaying && prevState.isPlaying) {
       this.list.interactive = true
       this.playBox.hide()
